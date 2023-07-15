@@ -155,122 +155,6 @@ uint32_t init_data[] = {
     0x13b5ad, 0x140000, 0x150000, 0x160000, 0x170000, 0x180000, 0x110000, 0x120400, 0x104000, 0x1f0000,
 };
 
-int jl2xxx_pre_init(struct phy_device *phydev)
-{
-	int i, j;
-	int regaddr, val;
-	int length = sizeof(init_data)/sizeof(init_data[0]);
-
-	for (i = 0; i < length; i++) {
-		regaddr = ((init_data[i] >> 16) & 0xff);
-		val = (init_data[i] & 0xffff);
-		phy_write(phydev, regaddr, val);
-		if (regaddr == 0x18) {
-			phy_write(phydev, 0x10, 0x8006);
-			for (j = 0; j < 8; j++) {
-				if (phy_read(phydev, 0x10) == 0) {
-					break;
-				}
-			}
-		}
-	}
-
-	return 0;
-}
-
-int enable_wol(struct phy_device *phydev)
-{
-	jlsemi_set_bits(phydev, WOL_CTL_PAGE,
-			WOL_CTL_REG, WOL_EN);
-
-	jlsemi_clear_bits(phydev, WOL_CTL_STAS_PAGE,
-			WOL_CTL_STAS_REG, WOL_CTL_EN);
-
-	return 0;
-}
-
-int disable_wol(struct phy_device *phydev)
-{
-	jlsemi_clear_bits(phydev, WOL_CTL_PAGE,
-			  WOL_CTL_REG, WOL_EN);
-
-	jlsemi_set_bits(phydev, BASIC_PAGE, BMCR_REG, SOFT_RESET);
-	/* wait soft reset complete*/
-	msleep(20);
-
-	return 0;
-}
-
-int setup_wol_low_polarity(struct phy_device *phydev)
-{
-	jlsemi_clear_bits(phydev, WOL_CTL_STAS_PAGE,
-			WOL_CTL_STAS_REG, WOL_POLARITY);
-	return 0;
-}
-
-int setup_wol_high_polarity(struct phy_device *phydev)
-{
-	jlsemi_set_bits(phydev, WOL_CTL_STAS_PAGE,
-			WOL_CTL_STAS_REG, WOL_POLARITY);
-	return 0;
-}
-
-int clear_wol_event(struct phy_device *phydev)
-{
-	jlsemi_set_bits(phydev, WOL_CTL_STAS_PAGE,
-			WOL_CTL_STAS_REG, WOL_EVENT);
-
-	jlsemi_clear_bits(phydev, WOL_CTL_STAS_PAGE,
-			WOL_CTL_STAS_REG, WOL_EVENT);
-	return 0;
-}
-
-int store_mac_addr(struct phy_device *phydev)
-{
-	int err;
-
-	jlsemi_write_page(phydev, WOL_CTL_STAS_PAGE);
-
-	/* Store the device address for the magic packet */
-	err = phy_write(phydev, WOL_MAC_ADDR2_REG,
-			((phydev->attached_dev->dev_addr[0] << 8) |
-			  phydev->attached_dev->dev_addr[1]));
-	if (err < 0)
-		return err;
-	err = phy_write(phydev, WOL_MAC_ADDR1_REG,
-			((phydev->attached_dev->dev_addr[2] << 8) |
-			  phydev->attached_dev->dev_addr[3]));
-	if (err < 0)
-		return err;
-	err = phy_write(phydev, WOL_MAC_ADDR0_REG,
-			((phydev->attached_dev->dev_addr[4] << 8) |
-			  phydev->attached_dev->dev_addr[5]));
-	if (err < 0)
-		return err;
-
-	/* change page to 0 */
-	jlsemi_write_page(phydev, BASIC_PAGE);
-
-	return 0;
-}
-
-int config_phy_info(struct phy_device *phydev,
-		    struct jl2xx1_priv *jl2xx1)
-{
-	int val, major, minor;
-
-	val = phy_read(phydev, 29);
-	if (val < 0)
-		return val;
-
-	major = (val >> 7) & 0x1f;
-	minor = (val >> 0) & 0x7f;
-	/* major enlarge 10 */
-	jl2xx1->sw_info = major * 10 + minor;
-
-	return 0;
-}
-
 /********************** Convenience function for phy **********************/
 
 /**
@@ -467,6 +351,122 @@ int jlsemi_get_bit(struct phy_device *phydev,
 	}
 
 	return __jlsemi_restore_page(phydev, oldpage, ret);
+}
+
+int enable_wol(struct phy_device *phydev)
+{
+	jlsemi_set_bits(phydev, WOL_CTL_PAGE,
+			WOL_CTL_REG, WOL_EN);
+
+	jlsemi_clear_bits(phydev, WOL_CTL_STAS_PAGE,
+			WOL_CTL_STAS_REG, WOL_CTL_EN);
+
+	return 0;
+}
+
+int disable_wol(struct phy_device *phydev)
+{
+	jlsemi_clear_bits(phydev, WOL_CTL_PAGE,
+			  WOL_CTL_REG, WOL_EN);
+
+	jlsemi_set_bits(phydev, BASIC_PAGE, BMCR_REG, SOFT_RESET);
+	/* wait soft reset complete*/
+	msleep(20);
+
+	return 0;
+}
+
+int setup_wol_low_polarity(struct phy_device *phydev)
+{
+	jlsemi_clear_bits(phydev, WOL_CTL_STAS_PAGE,
+			WOL_CTL_STAS_REG, WOL_POLARITY);
+	return 0;
+}
+
+int setup_wol_high_polarity(struct phy_device *phydev)
+{
+	jlsemi_set_bits(phydev, WOL_CTL_STAS_PAGE,
+			WOL_CTL_STAS_REG, WOL_POLARITY);
+	return 0;
+}
+
+int clear_wol_event(struct phy_device *phydev)
+{
+	jlsemi_set_bits(phydev, WOL_CTL_STAS_PAGE,
+			WOL_CTL_STAS_REG, WOL_EVENT);
+
+	jlsemi_clear_bits(phydev, WOL_CTL_STAS_PAGE,
+			WOL_CTL_STAS_REG, WOL_EVENT);
+	return 0;
+}
+
+int store_mac_addr(struct phy_device *phydev)
+{
+	int err;
+
+	jlsemi_write_page(phydev, WOL_CTL_STAS_PAGE);
+
+	/* Store the device address for the magic packet */
+	err = phy_write(phydev, WOL_MAC_ADDR2_REG,
+			((phydev->attached_dev->dev_addr[0] << 8) |
+			  phydev->attached_dev->dev_addr[1]));
+	if (err < 0)
+		return err;
+	err = phy_write(phydev, WOL_MAC_ADDR1_REG,
+			((phydev->attached_dev->dev_addr[2] << 8) |
+			  phydev->attached_dev->dev_addr[3]));
+	if (err < 0)
+		return err;
+	err = phy_write(phydev, WOL_MAC_ADDR0_REG,
+			((phydev->attached_dev->dev_addr[4] << 8) |
+			  phydev->attached_dev->dev_addr[5]));
+	if (err < 0)
+		return err;
+
+	/* change page to 0 */
+	jlsemi_write_page(phydev, BASIC_PAGE);
+
+	return 0;
+}
+
+int config_phy_info(struct phy_device *phydev,
+		    struct jl2xx1_priv *jl2xx1)
+{
+	int val, major, minor;
+
+	val = phy_read(phydev, 29);
+	if (val < 0)
+		return val;
+
+	major = (val >> 7) & 0x1f;
+	minor = (val >> 0) & 0x7f;
+	/* major enlarge 10 */
+	jl2xx1->sw_info = major * 10 + minor;
+
+	return 0;
+}
+
+int jl2xxx_pre_init(struct phy_device *phydev)
+{
+	int i, j;
+	int regaddr, val;
+	int length = sizeof(init_data)/sizeof(init_data[0]);
+
+	for (i = 0; i < length; i++) {
+		regaddr = ((init_data[i] >> 16) & 0xff);
+		val = (init_data[i] & 0xffff);
+		phy_write(phydev, regaddr, val);
+		if (regaddr == 0x18) {
+			phy_write(phydev, 0x10, 0x8006);
+			for (j = 0; j < 8; j++) {
+				if (phy_read(phydev, 0x10) == 0) {
+					break;
+				}
+			}
+		}
+	}
+
+	return 0;
 }
 
 static int jlsemi_probe(struct phy_device *phydev)
