@@ -735,6 +735,15 @@ static int verify_module_params(struct vfd_dev *dev)
 	return ret >= 0;
 }
 
+static inline int of_get_named_gpio_flags(const struct device_node *np,
+               const char *list_name, int index, enum of_gpio_flags *flags)
+{
+	if (flags)
+		*flags = 0;
+
+	return -ENOSYS;
+}
+
 void get_pin_from_dt(const char *name, const struct platform_device *pdev, struct vfd_pin *pin)
 {
 	if (of_find_property(pdev->dev.of_node, name, NULL)) {
