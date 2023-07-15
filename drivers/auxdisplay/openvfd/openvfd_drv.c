@@ -735,26 +735,6 @@ static int verify_module_params(struct vfd_dev *dev)
 	return ret >= 0;
 }
 
-static inline int of_get_named_gpio_flags(const struct device_node *np,
-               const char *list_name, int index, enum of_gpio_flags *flags)
-{
-	if (flags)
-		*flags = 0;
-
-	return -ENOSYS;
-}
-
-void get_pin_from_dt(const char *name, const struct platform_device *pdev, struct vfd_pin *pin)
-{
-	if (of_find_property(pdev->dev.of_node, name, NULL)) {
-		pin->pin = of_get_named_gpio_flags(pdev->dev.of_node, name, 0, &pin->flags.value);
-		pr_dbg2("%s: pin = %d, flags = 0x%02X\n", name, pin->pin, pin->flags.value);
-	} else {
-		pin->pin = -2;
-		pr_dbg2("%s pin entry not found\n", name);
-	}
-}
-
 int request_pin(const char *name, struct vfd_pin *pin, unsigned char enable_skip)
 {
 	int ret = 0;
@@ -804,68 +784,8 @@ static int openvfd_driver_probe(struct platform_device *pdev)
 	pdata->dev->mutex = &mutex;
 	pr_dbg2("Version: %s\n", OPENVFD_DRIVER_VERSION);
 	if (!verify_module_params(pdata->dev)) {
-		int i;
-		__u8 j;
-		pr_error("Failed to verify VFD configuration file, attempt using device tree as fallback.\n");
-		get_pin_from_dt(MOD_NAME_CLK, pdev, &pdata->dev->clk_pin);
-		get_pin_from_dt(MOD_NAME_DAT, pdev, &pdata->dev->dat_pin);
-		get_pin_from_dt(MOD_NAME_STB, pdev, &pdata->dev->stb_pin);
-		get_pin_from_dt(MOD_NAME_GPIO0, pdev, &pdata->dev->gpio0_pin);
-		get_pin_from_dt(MOD_NAME_GPIO1, pdev, &pdata->dev->gpio1_pin);
-		get_pin_from_dt(MOD_NAME_GPIO2, pdev, &pdata->dev->gpio2_pin);
-		get_pin_from_dt(MOD_NAME_GPIO3, pdev, &pdata->dev->gpio3_pin);
-
-		chars_prop = of_find_property(pdev->dev.of_node, MOD_NAME_CHARS, NULL);
-		if (!chars_prop || !chars_prop->value) {
-			pr_error("can't find %s list, falling back to defaults.", MOD_NAME_CHARS);
-			chars_prop = NULL;
-		}
-		else if (chars_prop->length < 5) {
-			pr_error("%s list is too short, falling back to defaults.", MOD_NAME_CHARS);
-			chars_prop = NULL;
-		}
-
-		for (j = 0; j < (sizeof(pdata->dev->dtb_active.dat_index) / sizeof(char)); j++)
-			pdata->dev->dtb_active.dat_index[j] = j;
-		pr_dbg2("chars_prop = %p\n", chars_prop);
-		if (chars_prop) {
-			__u8 *c = (__u8*)chars_prop->value;
-			const int length = min(chars_prop->length, (int)(sizeof(pdata->dev->dtb_active.dat_index) / sizeof(char)));
-			pr_dbg2("chars_prop->length = %d\n", chars_prop->length);
-			for (i = 0; i < length; i++) {
-				pdata->dev->dtb_active.dat_index[i] = c[i];
-				pr_dbg2("char #%d: %d\n", i, c[i]);
-			}
-		}
-
-		dot_bits_prop = of_find_property(pdev->dev.of_node, MOD_NAME_DOTS, NULL);
-		if (!dot_bits_prop || !dot_bits_prop->value) {
-			pr_error("can't find %s list, falling back to defaults.", MOD_NAME_DOTS);
-			dot_bits_prop = NULL;
-		}
-		else if (dot_bits_prop->length < LED_DOT_MAX) {
-			pr_error("%s list is too short, falling back to defaults.", MOD_NAME_DOTS);
-			dot_bits_prop = NULL;
-		}
-
-		for (i = 0; i < LED_DOT_MAX; i++)
-			pdata->dev->dtb_active.led_dots[i] = ledDots[i];
-		pr_dbg2("dot_bits_prop = %p\n", dot_bits_prop);
-		if (dot_bits_prop) {
-			__u8 *d = (__u8*)dot_bits_prop->value;
-			pr_dbg2("dot_bits_prop->length = %d\n", dot_bits_prop->length);
-			for (i = 0; i < dot_bits_prop->length; i++) {
-				pdata->dev->dtb_active.led_dots[i] = ledDots[d[i]];
-				pr_dbg2("dot_bit #%d: %d\n", i, d[i]);
-			}
-		}
-
-		memset(&pdata->dev->dtb_active.display, 0, sizeof(struct vfd_display));
-		display_type_prop = of_find_property(pdev->dev.of_node, MOD_NAME_TYPE, NULL);
-		if (display_type_prop && display_type_prop->value)
-			of_property_read_u32(pdev->dev.of_node, MOD_NAME_TYPE, (int*)&pdata->dev->dtb_active.display);
-		pr_dbg2("display.type = %d, display.controller = %d, pdata->dev->dtb_active.display.flags = 0x%02X\n",
-			pdata->dev->dtb_active.display.type, pdata->dev->dtb_active.display.controller, pdata->dev->dtb_active.display.flags);
+		pr_error("Failed to verify VFD configuration\n");
+		goto get_param_mem_fail;
 	}
 
 	if (request_pin("gpio_clk", &pdata->dev->clk_pin, allow_skip_clk_dat_request))
