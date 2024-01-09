@@ -627,6 +627,7 @@ static int is_right_chip(struct gpio_chip *chip, void *data)
 static int get_chip_pin_number(const unsigned int gpio[])
 {
 	int pin = -1;
+	struct gpio_device *gdev;
 	struct gpio_chip *chip;
 	const char *bank_name = vfd_gpio_chip_name;
 	if (!bank_name && gpio[0] < 6) {
@@ -639,8 +640,9 @@ static int get_chip_pin_number(const unsigned int gpio[])
 	}
 
 	if (bank_name) {
-		chip = gpiochip_find((char *)bank_name, is_right_chip);
-		if (chip) {
+		gdev = gpio_device_find((char *)bank_name, is_right_chip);
+		if (gdev) {
+			chip = gpio_device_get_chip(gdev);
 			if (chip->ngpio > gpio[1])
 				pin = chip->base + gpio[1];
 			pr_dbg2("\"%s\" chip found.\tbase = %d, pin count = %d, pin = %d, offset = %d\n", bank_name, chip->base, chip->ngpio, gpio[1], pin);
@@ -703,7 +705,7 @@ static int verify_module_params(struct vfd_dev *dev)
 	dev->hw_protocol.protocol = (u_int8)vfd_gpio_protocol[0];
 	dev->hw_protocol.device_id = (u_int8)vfd_gpio_protocol[1];
 
-	gpiochip_find(NULL, enum_gpio_chips);
+	gpio_device_find(NULL, enum_gpio_chips);
 	pr_dbg2("Detected gpio chips:\t%s.\n", gpio_chip_names);
 	if (ret >= 0)
 		ret = evaluate_pin("vfd_gpio_clk", vfd_gpio_clk, &dev->clk_pin, allow_skip_clk_dat_evaluation);
