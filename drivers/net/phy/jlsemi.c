@@ -3856,7 +3856,7 @@ static void jl2xxx_get_strings(struct phy_device *phydev, u8 *data)
 		return;
 
 	for (i = 0; i < priv->nstats; i++)
-		strlcpy(data + i * ETH_GSTRING_LEN,
+		strscpy(data + i * ETH_GSTRING_LEN,
 			priv->hw_stats[i].string, ETH_GSTRING_LEN);
 }
 #endif
