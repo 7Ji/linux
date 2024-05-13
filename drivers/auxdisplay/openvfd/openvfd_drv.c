@@ -616,7 +616,7 @@ static void print_param_debug(const char *label, int argc, unsigned int param[])
 	pr_dbg2("%s\n", buffer);
 }
 
-static int is_right_chip(struct gpio_chip *chip, void *data)
+static int is_right_chip(struct gpio_chip *chip, const void *data)
 {
 	pr_dbg("is_right_chip %s | %s | %d\n", chip->label, (char*)data, strcmp(data, chip->label));
 	if (strcmp(data, chip->label) == 0)
@@ -672,7 +672,7 @@ int evaluate_pin(const char *name, const unsigned int *vfd_arg, struct vfd_pin *
 
 char gpio_chip_names[1024] = { 0 };
 
-static int enum_gpio_chips(struct gpio_chip *chip, void *data)
+static int enum_gpio_chips(struct gpio_chip *chip, const void *data)
 {
 	static unsigned char first_iteration = 1;
 	const char *sep = ", ";
