@@ -883,7 +883,7 @@ static int openvfd_driver_probe(struct platform_device *pdev)
 	return state;
 }
 
-static int openvfd_driver_remove(struct platform_device *pdev)
+static void openvfd_driver_remove(struct platform_device *pdev)
 {
 	set_power(0);
 #if defined(CONFIG_HAS_EARLYSUSPEND) || defined(CONFIG_AMLOGIC_LEGACY_EARLY_SUSPEND)
@@ -910,7 +910,6 @@ static int openvfd_driver_remove(struct platform_device *pdev)
 	kfree(pdata);
 	pdata = NULL;
 #endif
-	return 0;
 }
 
 static void openvfd_driver_shutdown(struct platform_device *dev)
