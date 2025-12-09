@@ -42,9 +42,11 @@
 #ifdef CONFIG_HAS_EARLYSUSPEND
 #include <linux/earlysuspend.h>
 static struct early_suspend openvfd_early_suspend;
-#elif CONFIG_AMLOGIC_LEGACY_EARLY_SUSPEND
+#else
+#ifdef CONFIG_AMLOGIC_LEGACY_EARLY_SUSPEND
 #include <linux/amlogic/pm.h>
 static struct early_suspend openvfd_early_suspend;
+#endif
 #endif
 
 unsigned char vfd_display_auto_power = 1;
@@ -402,10 +404,12 @@ static int register_openvfd_driver(void)
 {
 	int ret = 0;
 	ret = misc_register(&openvfd_device);
-	if (ret)
+	if (ret) {
 		pr_dbg("%s: failed to add openvfd module\n", __func__);
-	else
+	}
+	else {
 		pr_dbg("%s: Succeeded to add openvfd module \n", __func__);
+	}
 	return ret;
 }
 
@@ -758,9 +762,6 @@ int request_pin(const char *name, struct vfd_pin *pin, unsigned char enable_skip
 static int openvfd_driver_probe(struct platform_device *pdev)
 {
 	int state = -EINVAL;
-	struct property *chars_prop = NULL;
-	struct property *dot_bits_prop = NULL;
-	struct property *display_type_prop = NULL;
 	int ret = 0;
 	u_int8 allow_skip_clk_dat_request = vfd_gpio_protocol[0] > 0;
 
