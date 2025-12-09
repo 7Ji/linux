@@ -15,6 +15,8 @@
 
 #include "check.h"
 
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+
 #define APT_PART_NAME_MAXLEN	15
 #define APT_MAX_PARTS			32
 #define APT_MAGIC_STRING		"MPT"

@@ -22,6 +22,7 @@ static void gfx_mono_ctrl_set_icon(const char *name, unsigned char state);
 static size_t gfx_mono_ctrl_read_data(unsigned char *data, size_t length);
 static size_t gfx_mono_ctrl_write_data(const unsigned char *data, size_t length);
 static size_t gfx_mono_ctrl_write_display_data(const struct vfd_display_data *data);
+void transpose_buffer(unsigned char *buffer, const struct rect *rect);
 
 static struct controller_interface gfx_mono_ctrl_interface = {
 	.init = gfx_mono_ctrl_init,

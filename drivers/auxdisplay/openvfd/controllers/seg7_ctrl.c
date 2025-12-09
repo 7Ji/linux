@@ -1,5 +1,7 @@
 #include "controller.h"
 
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+
 #define LEDCODES_LEN	(sizeof(LED_decode_tab1)/sizeof(LED_decode_tab1[0]))
 const led_bitmap *ledCodes = LED_decode_tab1;
 unsigned char ledDot = p1;

@@ -37,6 +37,8 @@
 #include "openvfd_drv.h"
 #include "controllers/controller_list.h"
 
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+
 #ifdef CONFIG_HAS_EARLYSUSPEND
 #include <linux/earlysuspend.h>
 static struct early_suspend openvfd_early_suspend;
