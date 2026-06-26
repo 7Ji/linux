@@ -42,7 +42,7 @@ struct amlogic_table {
 	struct amlogic_header header;
 	struct amlogic_partition parts[APT_MAX_PARTS];
 } __packed;
-	
+
 
 u32 amlogic_checksum(struct amlogic_table *apt) {
 	u32 checksum = 0;
@@ -205,7 +205,7 @@ bool amlogic_should_parse_block(struct parsed_partitions *state) {
 /**
  * amlogic_partition - scan for Amlogic proprietary partitions
  * @state: disk parsed partitions
- * 
+ *
  * Returns:
  * -1 if unable to read the partition table
  *  0 if this isn't our partition table
@@ -227,7 +227,7 @@ int amlogic_partition(struct parsed_partitions *state){
 		return 0;
 	}
 	disk_size = disk_sectors << 9;
-	 
+
 	for (sector_t i = 0; i < 3; ++i) {
 		Sector sect;
 		u8 *data = read_part_sector(state, 0x12000 + i, &sect);
@@ -252,12 +252,11 @@ int amlogic_partition(struct parsed_partitions *state){
 		u64 end;
 		struct partition_meta_info *info;
 		size_t name_min;
-		char tmp[sizeof(info->volname) + 4];
 		if (offset > disk_sectors) {
 			pr_warn("Amlogic partition: partition %s's offset is larger than disk size (sectors 0x%llx > 0x%llx), shifting its offset to disk end\n", part->name, offset, disk_sectors);
 			offset = disk_sectors;
 		}
-		
+
 		end = offset + size;
 
 		if (end > disk_sectors) {
@@ -277,12 +276,11 @@ int amlogic_partition(struct parsed_partitions *state){
 		strncpy(info->volname, part->name, name_min);
 		info->volname[name_min] = '\0';
 
-		snprintf(tmp, sizeof(tmp), "(%s)", info->volname);
-		strlcat(state->pp_buf, tmp, PAGE_SIZE);
+		seq_buf_printf(&state->pp_buf, "(%s)", info->volname);
 
 		state->parts[i + 1].has_info = true;
 	}
 
-	strlcat(state->pp_buf, "\n", PAGE_SIZE);
+	seq_buf_putc(&state->pp_buf, '\n');
 	return 1;
 }
