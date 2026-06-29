@@ -33,7 +33,7 @@
 #include <linux/fs.h>
 #include <linux/poll.h>
 #include <linux/gpio.h>
-#include <linux/of_gpio.h>
+#include <linux/gpio/driver.h>
 #include "openvfd_drv.h"
 #include "controllers/controller_list.h"
 
@@ -622,19 +622,11 @@ static void print_param_debug(const char *label, int argc, unsigned int param[])
 	pr_dbg2("%s\n", buffer);
 }
 
-static int is_right_chip(struct gpio_chip *chip, const void *data)
-{
-	pr_dbg("is_right_chip %s | %s | %d\n", chip->label, (char*)data, strcmp(data, chip->label));
-	if (strcmp(data, chip->label) == 0)
-		return 1;
-	return 0;
-}
-
 static int get_chip_pin_number(const unsigned int gpio[])
 {
 	int pin = -1;
 	struct gpio_device *gdev;
-	struct gpio_chip *chip;
+	struct gpio_desc *desc;
 	const char *bank_name = vfd_gpio_chip_name;
 	if (!bank_name && gpio[0] < 6) {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4,0,0)
@@ -646,12 +638,13 @@ static int get_chip_pin_number(const unsigned int gpio[])
 	}
 
 	if (bank_name) {
-		gdev = gpio_device_find((char *)bank_name, is_right_chip);
+		gdev = gpio_device_find_by_label(bank_name);
 		if (gdev) {
-			chip = gpio_device_get_chip(gdev);
-			if (chip->ngpio > gpio[1])
-				pin = chip->base + gpio[1];
-			pr_dbg2("\"%s\" chip found.\tbase = %d, pin count = %d, pin = %d, offset = %d\n", bank_name, chip->base, chip->ngpio, gpio[1], pin);
+			desc = gpio_device_get_desc(gdev, gpio[1]);
+			if (!IS_ERR(desc))
+				pin = desc_to_gpio(desc);
+			pr_dbg2("\"%s\" chip found.\tbase = %d, pin = %d, offset = %d\n", bank_name, gpio_device_get_base(gdev), pin, gpio[1]);
+			gpio_device_put(gdev);
 		} else {
 			pr_dbg2("\"%s\" chip was not found\n", bank_name);
 		}
