@@ -85,8 +85,8 @@ bool amlogic_is_partition_name_valid(char *name) {
 				break;
 		}
 	}
-	strncpy(safe_name, name, 15);
-	strncpy(safe_name + 15, "...", 3);
+	strscpy(safe_name, name, 15);
+	strscpy(safe_name + 15, "...", 3);
 	pr_warn("Amlogic partition: partition name not ended properly: %s\n", safe_name);
 	return false;
 }
@@ -127,9 +127,9 @@ bool amlogic_is_valid(struct amlogic_table *apt) {
 	}
 	if (strncmp(apt->header.version, APT_VERSION_STRING, strlen(APT_VERSION_STRING))) {
 		char safe_version[15] = "";
-		strncpy(safe_version, apt->header.version, 11);
+		strscpy(safe_version, apt->header.version, 11);
 		if (safe_version[11]) {
-			strncpy(safe_version + 11, "...", 3);
+			strscpy(safe_version + 11, "...", 3);
 		}
 		pr_warn("Amlogic partition: header version not right: %s != %s\n", safe_version, APT_VERSION_STRING);
 		return false;
@@ -273,7 +273,7 @@ int amlogic_partition(struct parsed_partitions *state){
 
 		info = &state->parts[i + 1].info;
 		name_min = min_t(size_t, sizeof info->volname, sizeof part->name);
-		strncpy(info->volname, part->name, name_min);
+		strscpy(info->volname, part->name, name_min);
 		info->volname[name_min] = '\0';
 
 		seq_buf_printf(&state->pp_buf, "(%s)", info->volname);
